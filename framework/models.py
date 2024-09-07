@@ -5,6 +5,27 @@ def createModelList():
     m_list = {}
     return m_list
 
+def createDefaultModelList():
+    m_list = {}
+
+    model_name_1 = "meta-llama/Llama-2-7b-chat-hf"
+    tokenizer_1 = AutoTokenizer.from_pretrained(model_name_1)
+    model_1 = AutoModelForCausalLM.from_pretrained(model_name_1, torch_dtype=torch.float16).to("cuda")
+    m_list[model_name_1] = {
+        "tokenizer": tokenizer_1,
+        "model": model_1
+    }
+
+    model_name_2 = "meta-llama/Llama-2-13b-chat-hf"
+    tokenizer_2 = AutoTokenizer.from_pretrained(model_name_2)
+    model_2 = AutoModelForCausalLM.from_pretrained(model_name_2, torch_dtype=torch.float16).to("cuda")
+    m_list[model_name_2] = {
+        "tokenizer": tokenizer_2,
+        "model": model_2
+    }
+
+    return m_list
+
 def add(model_list):
     model_name = input("Input a model from Hugging Face: ")
 
