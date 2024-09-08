@@ -26,6 +26,13 @@ def createDefaultModelList():
 
     return m_list
 
+def inference(t_i, model, tokenizer):
+    inputs = tokenizer(t_i, return_tensors="pt") # .to("cuda")
+    output = model.generate(inputs['input_ids'], max_length=100)
+    output_text = tokenizer.decode(output[0], skip_special_tokens=True)
+    return output_text
+
+# for scalability latter
 def add(model_list):
     model_name = input("Input a model from Hugging Face: ")
 

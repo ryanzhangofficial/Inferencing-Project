@@ -3,6 +3,8 @@ import random
 import fastText 
 import time
 import os
+from models import inference    
+from utilities import calculate_bleu
 
 # Algorithm for model selection framework
 #
@@ -13,28 +15,31 @@ import os
 # t_i = input sample for current request
 # t_c = content for current request derived from t_i
 # l, s = large model, small model <!--In a real world setting, this should be scalable-->
-def algorithm(T, c):
+def algorithm(T, c, m_list):
     l_predictor, s_predictor = None, None
     for t in range(1, T+1):
         t_i = input(f"Enter input sample for request {t}/{T}: ")
+        print(t_i)
 
         p_t = min(1, c/math.sqrt(t))
         X_t = Bernoulli(p_t)
         if X_t == 1:
-            t_c = getResults(t_i)
+            t_e = input("Input expected outcome: ") # wmt14_dataset = load_dataset('wmt14', 'de-en', split='validation')
+            t_c = getResults(t_i, t_e, m_list)
             sgdStep(t_c)
         else:
-            l, s = queryBest(t_i, l_predictor, s_predictor)
+            output = queryBest(t_i, m_list)
+            print(output)
 
 def Bernoulli(p_t):
     return random.random() < p_t 
 
-def queryBest(t_i):
+def queryBest(t_i, m_list):
     l_acc, s_acc = predict(t_i)
-    if l_acc > s_acc: # use larger model, e.g. 60b llama
-        return "" 
-    else: # use smaller model for all other cases, e.g. 7b llama
-        return ""
+    if l_acc > s_acc: # use larger model, e.g. 7b llama
+        return inference(t_i, m_list['meta-llama/Llama-2-13b-chat-hf']['model'], m_list['meta-llama/Llama-2-13b-chat-hf']['tokenizer'])
+    else: # use smaller model for all other cases, e.g. 3b llama
+        return inference(t_i, m_list['meta-llama/Llama-2-7b-chat-hf']['model'], m_list['meta-llama/Llama-2-7b-chat-hf']['tokenizer'])
 
 def sgdStep(t_c):
     with open("fasttext_large.txt", "w") as f:
@@ -63,8 +68,12 @@ def predict(text, l_predictor, s_predictor):
 
     return l_predicted_accuracy, s_predicted_accuracy
 
-def getResults(t_i):
-    # input t_i(the input sample for the request) to 
+def getResults(t_i, t_e, m_list):
+    l_output = inference(t_i, m_list['meta-llama/Llama-2-13b-chat-hf']['model'], m_list['meta-llama/Llama-2-13b-chat-hf']['tokenizer'])
+    s_output = inference(t_i, m_list['meta-llama/Llama-2-7b-chat-hf']['model'], m_list['meta-llama/Llama-2-7b-chat-hf']['tokenizer'])    
+
+    l_acc = calculate_bleu(l_output, t_e)
+    s_acc = calculate_bleu(s_output, t_e)
 
     return {
         'input_text': t_i,
