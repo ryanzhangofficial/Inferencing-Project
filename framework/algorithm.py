@@ -1,10 +1,11 @@
 import math
 import random
-import fastText 
-import time
+import sys
 import os
-from models import inference    
-from utilities import calculate_bleu
+from utilities.models import inference    
+from utilities.metrics import calculate_bleu
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import fastText
 
 # Algorithm for model selection framework
 #
@@ -25,17 +26,21 @@ def algorithm(T, c, m_list):
         X_t = Bernoulli(p_t)
         if X_t == 1:
             t_e = input("Input expected outcome: ") # wmt14_dataset = load_dataset('wmt14', 'de-en', split='validation')
+            print("Received Input")
             t_c = getResults(t_i, t_e, m_list)
-            sgdStep(t_c)
+            print("Got Results")
+            l_predictor, s_predictor = sgdStep(t_c)
+            checkpoint(l_predictor, s_predictor)
+            print("SGD STEP!")
         else:
-            output = queryBest(t_i, m_list)
+            output = queryBest(t_i, m_list, l_predictor, s_predictor)
             print(output)
 
 def Bernoulli(p_t):
     return random.random() < p_t 
 
-def queryBest(t_i, m_list):
-    l_acc, s_acc = predict(t_i)
+def queryBest(t_i, m_list, l_predictor, s_predictor):
+    l_acc, s_acc = predict(t_i, l_predictor, s_predictor)
     if l_acc > s_acc: # use larger model, e.g. 7b llama
         return inference(t_i, m_list['meta-llama/Llama-2-13b-chat-hf']['model'], m_list['meta-llama/Llama-2-13b-chat-hf']['tokenizer'])
     else: # use smaller model for all other cases, e.g. 3b llama
@@ -69,14 +74,31 @@ def predict(text, l_predictor, s_predictor):
     return l_predicted_accuracy, s_predicted_accuracy
 
 def getResults(t_i, t_e, m_list):
-    l_output = inference(t_i, m_list['meta-llama/Llama-2-13b-chat-hf']['model'], m_list['meta-llama/Llama-2-13b-chat-hf']['tokenizer'])
-    s_output = inference(t_i, m_list['meta-llama/Llama-2-7b-chat-hf']['model'], m_list['meta-llama/Llama-2-7b-chat-hf']['tokenizer'])    
+    s_output = inference(t_i, m_list['microsoft/Phi-3-mini-4k-instruct']['model'], m_list['microsoft/Phi-3-mini-4k-instruct']['tokenizer'])
+    print("LARGE INFERENCE DONE")
+    l_output = inference(t_i, m_list['microsoft/Phi-3-small-8k-instruct']['model'], m_list['microsoft/Phi-3-small-8k-instruct']['tokenizer'])    
+    print("SMALL INFERENCE DONE")
 
-    l_acc = calculate_bleu(l_output, t_e)
     s_acc = calculate_bleu(s_output, t_e)
+    l_acc = calculate_bleu(l_output, t_e)
 
     return {
         'input_text': t_i,
         'large_model_accuracy': l_acc,
         'small_model_accuracy': s_acc
     }
+
+def checkpoint(l_predictor, s_predictor, t, p_t):
+    if p_t > 0.5:
+        if t % int(math.sqrt(t)) == 0:
+            save_models(l_predictor, s_predictor)
+    else:
+        if t % max(1, int(1 / math.sqrt(t))) == 0:
+            save_models(l_predictor, s_predictor)
+
+def save_models(l_predictor, s_predictor):
+    if l_predictor:
+        l_predictor.save_model("large_predictor.bin")
+    if s_predictor:
+        s_predictor.save_model("small_predictor.bin")
+    print("Models saved successfully.")
