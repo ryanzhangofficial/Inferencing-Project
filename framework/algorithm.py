@@ -30,7 +30,7 @@ def algorithm(T, c, m_list):
             t_c = getResults(t_i, t_e, m_list)
             print("Got Results")
             l_predictor, s_predictor = sgdStep(t_c)
-            checkpoint(l_predictor, s_predictor)
+            l_predictor, s_predictor = checkpoint(l_predictor, s_predictor)
             print("SGD STEP!")
         else:
             output = queryBest(t_i, m_list, l_predictor, s_predictor)
@@ -91,10 +91,12 @@ def getResults(t_i, t_e, m_list):
 def checkpoint(l_predictor, s_predictor, t, p_t):
     if p_t > 0.5:
         if t % int(math.sqrt(t)) == 0:
-            save_models(l_predictor, s_predictor)
+            l_predictor, s_predictor = save_models(l_predictor, s_predictor)
     else:
         if t % max(1, int(1 / math.sqrt(t))) == 0:
-            save_models(l_predictor, s_predictor)
+            l_predictor, s_predictor = save_models(l_predictor, s_predictor)
+
+    return l_predictor, s_predictor
 
 def save_models(l_predictor, s_predictor):
     if l_predictor:
@@ -102,3 +104,5 @@ def save_models(l_predictor, s_predictor):
     if s_predictor:
         s_predictor.save_model("small_predictor.bin")
     print("Models saved successfully.")
+
+    return l_predictor, s_predictor

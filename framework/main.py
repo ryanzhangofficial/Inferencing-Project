@@ -1,5 +1,5 @@
 from algorithm import algorithm
-from models import createDefaultModelList
+from utilities.models import createDefaultModelList
 
 def main():
     T = int(input("Input total amount of requests: "))  
