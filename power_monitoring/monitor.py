@@ -38,8 +38,12 @@ class HWMonitor(Thread):
             sys_stats = self.psutil_monitor.read()
 
             all_res = {**sys_stats}
+<<<<<<< HEAD
             print(all_res)
             
+=======
+
+>>>>>>> master
             self.stats = all_res
             wandb.log(all_res)
             time.sleep(1 / self.monitoring_freq)
