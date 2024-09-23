@@ -11,7 +11,7 @@ except ImportError:
 
 from threading import Thread, Event
 
-import wandb.errors
+# import wandb.errors
 
 
 class HWMonitor(Thread):
@@ -40,7 +40,7 @@ class HWMonitor(Thread):
             all_res = {**sys_stats}
             
             self.stats = all_res
-            wandb.log(all_res)
+            # wandb.log(all_res)
             time.sleep(1 / self.monitoring_freq)
         return
 
