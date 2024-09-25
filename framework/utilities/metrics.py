@@ -6,7 +6,7 @@ def calculate_bleu(generated_output, reference_output):
     generated_tokens = nltk.word_tokenize(generated_output)
     reference_tokens = [nltk.word_tokenize(reference_output)]
     smoothie = SmoothingFunction().method4
-    bleu_score = sentence_bleu(reference_tokens, generated_tokens, smoothing_function=smoothie)
+    bleu_score = sentence_bleu(reference_tokens, generated_tokens, weights=(1, 0), smoothing_function=smoothie)
     return bleu_score
 
 def calculate_rouge(generated_output, reference_output):
